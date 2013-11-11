@@ -56,7 +56,7 @@ FORMAT = ihex
 
 
 # Target file name (without extension).
-TARGET = t2313_softpwm
+TARGET = softpwm
 
 
 # List C source files here. (C dependencies are automatically generated.)

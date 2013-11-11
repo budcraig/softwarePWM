@@ -4,21 +4,22 @@
 
 void Init(void);
 void PWM_service (void);
-void fade(void);
+void all_fade_sync(void);
+void running_fade(void);
 
- uint8_t PD0_duty = 255;
- uint8_t PD1_duty = 125;
- uint8_t PD2_duty = 5;
- uint8_t PD3_duty = 0;
- uint8_t PD4_duty = 0;
- uint8_t PD5_duty = 0;
- uint8_t PD6_duty = 0;
- uint8_t PD7_duty = 0;
+uint8_t duty_cycle[8] = {0, 0, 0, 0, 0, 0, 0, 0 };
 
- uint8_t flag[8] = {1, 0, 0, 0, 0, 0, 0, 0 };
+uint8_t flag[8] = {0, 0, 0, 0, 0, 0, 0, 0 };
+
+uint8_t current_up = 0;
+uint8_t current_down = 0;
+
 
 volatile uint8_t count = 0;
-uint8_t count2 = 0;
+uint8_t all_fade_count = 0;
+
+uint8_t running_fade_setup = 0;
+uint8_t running_fade_count = 0;
 
 
 int main(void){ 
@@ -29,8 +30,11 @@ int main(void){
 	
 	PWM_service();
 
-	fade();
 	
+	/*------Uncomment the desired pattern--------*/
+	//all_fade_sync();
+	running_fade();
+	/*-------------------------------------------*/
 	}
     
 }
@@ -53,60 +57,86 @@ void Init(){
 void PWM_service(){
 
 
-if(PD0_duty >= count){PORTD |= (1<<PD0);}
+if(duty_cycle[0] >= count){PORTD |= (1<<PD0);}
 	else{PORTD &= ~(1<<PD0);}
 	
-if(PD1_duty >= count){PORTD |= (1<<PD1);}
+if(duty_cycle[1] >= count){PORTD |= (1<<PD1);}
 	else{PORTD &= ~(1<<PD1);}
 	
-if(PD2_duty >= count){PORTD |= (1<<PD2);}
+if(duty_cycle[2] >= count){PORTD |= (1<<PD2);}
 	else{PORTD &= ~(1<<PD2);}	
 	
-if(PD3_duty >= count){PORTD |= (1<<PD3);}
+if(duty_cycle[3] >= count){PORTD |= (1<<PD3);}
 	else{PORTD &= ~(1<<PD3);}
 	
-if(PD4_duty >= count){PORTD |= (1<<PD4);}
+if(duty_cycle[4] >= count){PORTD |= (1<<PD4);}
 	else{PORTD &= ~(1<<PD4);}
 	
-if(PD5_duty >= count){PORTD |= (1<<PD5);}
+if(duty_cycle[5] >= count){PORTD |= (1<<PD5);}
 	else{PORTD &= ~(1<<PD5);}
 	
-if(PD6_duty >= count){PORTD |= (1<<PD6);}
+if(duty_cycle[6] >= count){PORTD |= (1<<PD6);}
 	else{PORTD &= ~(1<<PD6);}
 	
-if(PD7_duty >= count){PORTD |= (1<<PD7);}
+if(duty_cycle[7] >= count){PORTD |= (1<<PD7);}
 	else{PORTD &= ~(1<<PD7);}
 
 }
 
  
-void fade(){
-if(count==254){count2++;}
+void all_fade_sync(){
+if(count==254){all_fade_count++;}
 
-		if(count2==2){
-		if(flag[0]==1){PD0_duty++;}
-			else{PD0_duty--;}
-		if(PD0_duty==255){flag[0]=0;}
-		if(PD0_duty==50){flag[0]=1;}
-		
-		if(flag[1]==1){PD1_duty++;}
-			else{PD1_duty--;}
-		if(PD1_duty==255){flag[1]=0;}
-		if(PD1_duty==50){flag[1]=1;}
-		
-		if(flag[2]==1){PD2_duty++;}
-			else{PD2_duty--;}
-		if(PD2_duty==255){flag[2]=0;}
-		if(PD2_duty==50){flag[2]=1;}
-		
-		count2=0;	
+		if(all_fade_count==5){
+			if(flag[0]==1){duty_cycle[0]++;}
+				else{duty_cycle[0]--;}
+			if(duty_cycle[0]==225){flag[0]=0;}
+			if(duty_cycle[0]==25){flag[0]=1;}
+			
+			if(flag[1]==1){duty_cycle[1]++;}
+				else{duty_cycle[1]--;}
+			if(duty_cycle[1]==225){flag[1]=0;}
+			if(duty_cycle[1]==25){flag[1]=1;}
+			
+			if(flag[2]==1){duty_cycle[2]++;}
+				else{duty_cycle[2]--;}
+			if(duty_cycle[2]==225){flag[2]=0;}
+			if(duty_cycle[2]==25){flag[2]=1;}
+			
+		all_fade_count=0;	
 	}
 }
+
+
+void running_fade(){
+	
+	if(running_fade_setup==0){duty_cycle[0]=200;current_down=0;current_up=1;running_fade_setup=1;}
+	
+	
+	if(count==253){running_fade_count++;count=0;}
+	
+	
+	
+	if(running_fade_count==1){
+		duty_cycle[current_up]++;
+		duty_cycle[current_down]--;
+		
+		if(duty_cycle[current_up] == 200){current_up++; current_down++;  }
+		if(current_up == 3){current_up = 0;}//duty_cycle[0]=0;duty_cycle[1]=0;duty_cycle[2]=0;current_down=3;}
+		if(current_down == 3){current_down = 0;}
+		running_fade_count=0;
+	
+	}
+	
+	
+}
+
 
 
 ISR(TIMER0_OVF_vect){
 
     count++;
+
  
 }
 
